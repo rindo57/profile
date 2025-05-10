@@ -59,4 +59,4 @@ with app:
         else:
             print("❌ Failed to update profile picture.")
 
-        time.sleep(60)
+        time.sleep(900)
