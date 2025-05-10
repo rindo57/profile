@@ -38,7 +38,7 @@ def rand_command():
         print("Failed to fetch image.")
 
 # /random Manual Random
-@app.on_message(filters.command("random") & filters.private & filters.user(Config.OWNER))
+@app.on_message(filters.command("random") & filters.private & filters.user(OWNER))
 def manual_rand_command(client, message):
     current_time = datetime.datetime.utcnow()
     image_path = download_random_image()
