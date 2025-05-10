@@ -1,63 +1,44 @@
-import os
-import datetime
+
 import requests
-import asyncio
-from pyrogram import Client, filters, idle
-from apscheduler.schedulers.asyncio import AsyncIOScheduler
-API_ID = 10247139
+import time
+import os
+from pyrogram import Client
+
+# Replace with your Telegram API credentials
+API_ID =10247139   # your api_id
 API_HASH = "96b46175824223a33737657ab943fd6a"
-OWNER = [7207726255]
-app = Client(
-    "rand_profile_pict",
-    api_id=API_ID,
-    api_hash=API_HASH
-)
 
-# Constants for Scheduler
-HOUR = 22
-MINUTE = 30
-SECOND = 0
-scheduler = AsyncIOScheduler()
+# Temporary image path
+IMG_PATH = "temp_profile.jpg"
 
-def download_random_image():
-    response = requests.get("https://pic.re/image", stream=True)
-    if response.status_code == 200:
-        with open("temp.jpg", "wb") as f:
-            for chunk in response.iter_content(1024):
-                f.write(chunk)
-        return "temp.jpg"
-    return None
+app = Client("auto_profile_pic_session", api_id=API_ID, api_hash=API_HASH)
 
-def rand_command():
-    current_time = datetime.datetime.utcnow()
-    image_path = download_random_image()
-    if image_path:
-        app.set_profile_photo(photo=open(image_path, 'rb'))
-        os.remove(image_path)
-        print("Image modified on {}".format(current_time))
-    else:
-        print("Failed to fetch image.")
+def download_image(url: str, path: str):
+    try:
+        response = requests.get(url)
+        if response.status_code == 200:
+            with open(path, "wb") as f:
+                f.write(response.content)
+            return True
+        else:
+            print(f"Failed to download image, status code: {response.status_code}")
+            return False
+    except Exception as e:
+        print(f"Download error: {e}")
+        return False
 
-@app.on_message(filters.command("random") & filters.private & filters.user(OWNER))
-def manual_rand_command(client, message):
-    current_time = datetime.datetime.utcnow()
-    image_path = download_random_image()
-    if image_path:
-        app.set_profile_photo(photo=open(image_path, 'rb'))
-        os.remove(image_path)
-        print("Image modified on {}".format(current_time))
-    else:
-        print("Failed to fetch image.")
+with app:
+    print("Logged in as", app.get_me().first_name)
+    while True:
+        print("Fetching new profile picture...")
+        if download_image("https://pic.re/image/", IMG_PATH):
+            try:
+                app.set_profile_photo(photo=IMG_PATH)
+                print("✅ Profile photo updated successfully.")
+            except Exception as e:
+                print("❌ Error setting profile photo:", e)
+        else:
+            print("❌ Failed to download new image.")
 
-async def main():
-    await app.start()  # Start Pyrogram client
-
-    # Start scheduler after event loop is running
-    scheduler.add_job(rand_command, 'interval', minutes=1)
-    scheduler.start()
-
-    print("Bot and scheduler started.")
-    await idle()  # Keep the app running
-
-if __name__ == "__main__":
-    asyncio.run(main())
+        # Wait for 60 seconds
+        time.sleep(60)
