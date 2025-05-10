@@ -9,8 +9,8 @@ API_HASH = "96b46175824223a33737657ab943fd6a"
 OWNER = [7207726255]
 app = Client(
     "rand_profile_pict",
-    api_id=Config.API_ID,
-    api_hash=Config.API_HASH
+    api_id=API_ID,
+    api_hash=API_HASH
 )
 
 # Constants for Scheduler
