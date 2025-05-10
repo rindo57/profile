@@ -59,7 +59,5 @@ async def main():
     print("Bot and scheduler started.")
     await idle()  # Keep the app running
 
-from pyrogram.idle import idle
-
 if __name__ == "__main__":
     asyncio.run(main())
