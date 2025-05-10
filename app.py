@@ -2,7 +2,7 @@ import os
 import datetime
 import requests
 
-from pyrogram import Client, filters
+from pyrogram import Client, filters, idle
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 API_ID = 10247139
 API_HASH = "96b46175824223a33737657ab943fd6a"
