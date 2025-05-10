@@ -20,7 +20,7 @@ SECOND = 0
 scheduler = AsyncIOScheduler()
 
 def download_random_image():
-    response = requests.get("https://picsum.photos/200/300", stream=True)
+    response = requests.get("https://pic.re/image", stream=True)
     if response.status_code == 200:
         with open("temp.jpg", "wb") as f:
             for chunk in response.iter_content(1024):
