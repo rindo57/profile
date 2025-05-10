@@ -17,6 +17,7 @@ app = Client(
 HOUR = 22
 MINUTE = 30
 SECOND = 0
+scheduler = AsyncIOScheduler()
 
 def download_random_image():
     response = requests.get("https://picsum.photos/200/300", stream=True)
@@ -37,8 +38,7 @@ def rand_command():
     else:
         print("Failed to fetch image.")
 
-# /random Manual Random
-@app.on_message(filters.command("random") & filters.private & filters.user(OWNER))
+@app.on_message(filters.command("random") & filters.private & filters.user(Config.OWNER))
 def manual_rand_command(client, message):
     current_time = datetime.datetime.utcnow()
     image_path = download_random_image()
@@ -49,8 +49,17 @@ def manual_rand_command(client, message):
     else:
         print("Failed to fetch image.")
 
-scheduler = AsyncIOScheduler()
-scheduler.add_job(rand_command, 'interval', minutes=1)
-scheduler.start()
+async def main():
+    await app.start()  # Start Pyrogram client
 
-app.run()
+    # Start scheduler after event loop is running
+    scheduler.add_job(rand_command, 'interval', minutes=1)
+    scheduler.start()
+
+    print("Bot and scheduler started.")
+    await idle()  # Keep the app running
+
+from pyrogram.idle import idle
+
+if __name__ == "__main__":
+    asyncio.run(main())
