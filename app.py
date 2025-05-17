@@ -7,7 +7,7 @@ from PIL import Image, ImageOps
 from pyrogram.errors import FloodWait
 
 # Replace with your Telegram API credentials
-API_ID = 10247139  # your api_id
+API_ID = 10247139
 API_HASH = "96b46175824223a33737657ab943fd6a"
 
 IMG_PATH = "temp_profile.jpg"
@@ -43,68 +43,66 @@ def download_and_prepare_image(image_url, path, size=(512, 512)):
         print("❌ Image processing error:", e)
         return False
 
-async def update_name_based_on_status():
-    while True:
-        try:
-            me = await app.get_me()
-            current_name = me.first_name
-            user = await app.get_users(me.id)
-            status = user.status
-            
-            new_name = "Ken 🟢" if status == "online" else "Ken 🔴"
-            
-            if current_name != new_name:
-                try:
-                    await app.update_profile(first_name=new_name)
-                    print(f"✅ Name updated to: {new_name} (Status: {status})")
-                except FloodWait as e:
-                    print(f"⚠️ Flood wait: {e.x} seconds")
-                    await asyncio.sleep(e.x)
-                except Exception as e:
-                    print(f"❌ Error updating name: {e}")
-        except Exception as e:
-            print(f"❌ Error checking status: {e}")
+async def update_name():
+    try:
+        me = await app.get_me()
+        user = await app.get_users(me.id)
+        status = user.status
+        new_name = "Ken 🟢" if status == "online" else "Ken 🔴"
         
-        await asyncio.sleep(10)  # Check every 10 seconds
-
-async def update_profile_picture():
-    while True:
-        print("🔄 Fetching new PNG anime image...")
-        image_url = get_png_image_url()
-
-        if image_url and download_and_prepare_image(image_url, IMG_PATH):
+        if me.first_name != new_name:
             try:
-                await app.set_profile_photo(photo=IMG_PATH)
-                print("✅ Profile picture updated.")
+                await app.update_profile(first_name=new_name)
+                print(f"✅ Name updated to: {new_name} (Status: {status})")
             except FloodWait as e:
                 print(f"⚠️ Flood wait: {e.x} seconds")
                 await asyncio.sleep(e.x)
             except Exception as e:
-                print("❌ Telegram error:", e)
-        else:
-            print("❌ Failed to update profile picture.")
+                print(f"❌ Error updating name: {e}")
+    except Exception as e:
+        print(f"❌ Error checking status: {e}")
 
-        await asyncio.sleep(900)  # Wait for 15 minutes (900 seconds)
+async def update_profile_pic():
+    print("🔄 Fetching new PNG anime image...")
+    image_url = get_png_image_url()
 
-async def main():
-    await app.start()
-    print("✅ Logged in as", (await app.get_me()).first_name)
+    if image_url and download_and_prepare_image(image_url, IMG_PATH):
+        try:
+            await app.set_profile_photo(photo=IMG_PATH)
+            print("✅ Profile picture updated.")
+        except FloodWait as e:
+            print(f"⚠️ Flood wait: {e.x} seconds")
+            await asyncio.sleep(e.x)
+        except Exception as e:
+            print("❌ Telegram error:", e)
+    else:
+        print("❌ Failed to update profile picture.")
+
+async def main_loop():
+    # Initial updates
+    await update_name()
+    await update_profile_pic()
     
-    # Create tasks for both functions
-    status_task = asyncio.create_task(update_name_based_on_status())
-    pp_task = asyncio.create_task(update_profile_picture())
-    
-    # Wait for both tasks to complete (they won't, since they're infinite loops)
-    await asyncio.gather(status_task, pp_task)
+    # Setup periodic tasks
+    while True:
+        try:
+            # Check status every 10 seconds
+            for _ in range(90):  # 90 * 10s = 900s (15 minutes)
+                await update_name()
+                await asyncio.sleep(10)
+            
+            # Update profile pic every 15 minutes
+            await update_profile_pic()
+            
+        except Exception as e:
+            print(f"❌ Main loop error: {e}")
+            await asyncio.sleep(30)  # Wait before retrying
 
-# Run the main function
-try:
-    asyncio.run(main())
-except KeyboardInterrupt:
-    print("\n👋 Stopping the bot...")
-except Exception as e:
-    print(f"❌ Unexpected error: {e}")
-finally:
-    if app.is_connected:
-        app.stop()
-    print("✅ Bot stopped successfully")
+@app.on_message()
+async def handle_messages(client, message):
+    # This keeps the connection alive
+    pass
+
+# Start the client
+print("Starting the bot...")
+app.run(main_loop())
