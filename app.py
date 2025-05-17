@@ -1,9 +1,10 @@
 import requests
 import asyncio
+import time
 from pyrogram import Client
 from PIL import Image, ImageOps
 from pyrogram.errors import FloodWait
-import time
+
 # Telegram API credentials
 API_ID = 10247139
 API_HASH = "96b46175824223a33737657ab943fd6a"
@@ -78,26 +79,37 @@ class ProfileUpdater:
         print(f"✅ Logged in as {(await self.app.get_me()).first_name}")
 
         try:
+            last_pic_update = 0
             while self.running:
+                current_time = time.time()
+                
                 # Update name every 10 seconds
                 await self.update_name()
-                await asyncio.sleep(10)
-
+                
                 # Update profile pic every 15 minutes (900 seconds)
-                if int(time.time()) % 900 < 10:  # Roughly every 15 minutes
+                if current_time - last_pic_update >= 900:
                     await self.update_profile_pic()
+                    last_pic_update = current_time
+                
+                await asyncio.sleep(10)
 
         except KeyboardInterrupt:
             print("\n👋 Stopping the bot...")
         except Exception as e:
             print(f"❌ Unexpected error: {e}")
         finally:
-            await self.app.stop()
+            if self.app.is_connected:
+                await self.app.stop()
             print("✅ Bot stopped successfully")
 
 if __name__ == "__main__":
     updater = ProfileUpdater()
+    loop = asyncio.new_event_loop()
+    asyncio.set_event_loop(loop)
+    
     try:
-        asyncio.run(updater.run())
+        loop.run_until_complete(updater.run())
     except KeyboardInterrupt:
         updater.running = False
+    finally:
+        loop.close()
