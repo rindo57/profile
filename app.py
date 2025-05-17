@@ -16,6 +16,7 @@ class ProfileUpdater:
     def __init__(self):
         self.app = Client("auto_profile_pic_session", api_id=API_ID, api_hash=API_HASH)
         self.running = True
+        self.last_pic_update = 0
 
     def get_png_image_url(self):
         try:
@@ -66,6 +67,7 @@ class ProfileUpdater:
             try:
                 await self.app.set_profile_photo(photo=IMG_PATH)
                 print("✅ Profile picture updated.")
+                self.last_pic_update = time.time()
             except FloodWait as e:
                 print(f"⚠️ Flood wait: {e.x} seconds")
                 await asyncio.sleep(e.x)
@@ -74,42 +76,46 @@ class ProfileUpdater:
         else:
             print("❌ Failed to update profile picture.")
 
-    async def run(self):
-        await self.app.start()
-        print(f"✅ Logged in as {(await self.app.get_me()).first_name}")
-
-        try:
-            last_pic_update = 0
-            while self.running:
-                current_time = time.time()
-                
+    async def run_updates(self):
+        while self.running:
+            try:
                 # Update name every 10 seconds
                 await self.update_name()
                 
                 # Update profile pic every 15 minutes (900 seconds)
-                if current_time - last_pic_update >= 900:
+                if time.time() - self.last_pic_update >= 900:
                     await self.update_profile_pic()
-                    last_pic_update = current_time
                 
                 await asyncio.sleep(10)
+            except Exception as e:
+                print(f"❌ Update error: {e}")
+                await asyncio.sleep(30)
 
+    async def run(self):
+        await self.app.start()
+        print(f"✅ Logged in as {(await self.app.get_me()).first_name}")
+        
+        try:
+            # Initial profile pic update
+            await self.update_profile_pic()
+            
+            # Start the update loop
+            await self.run_updates()
         except KeyboardInterrupt:
             print("\n👋 Stopping the bot...")
         except Exception as e:
             print(f"❌ Unexpected error: {e}")
         finally:
-            if self.app.is_connected:
+            if await self.app.is_connected():
                 await self.app.stop()
             print("✅ Bot stopped successfully")
 
-if __name__ == "__main__":
+async def main():
     updater = ProfileUpdater()
-    loop = asyncio.new_event_loop()
-    asyncio.set_event_loop(loop)
-    
+    await updater.run()
+
+if __name__ == "__main__":
     try:
-        loop.run_until_complete(updater.run())
+        asyncio.run(main())
     except KeyboardInterrupt:
-        updater.running = False
-    finally:
-        loop.close()
+        pass
