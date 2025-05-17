@@ -3,7 +3,7 @@ import asyncio
 from pyrogram import Client
 from PIL import Image, ImageOps
 from pyrogram.errors import FloodWait
-
+import time
 # Telegram API credentials
 API_ID = 10247139
 API_HASH = "96b46175824223a33737657ab943fd6a"
