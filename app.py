@@ -94,7 +94,7 @@ class ProfileUpdater:
                 if time.time() - self.last_pic_update >= 900:
                     await self.update_profile_pic()
                 
-                await asyncio.sleep(10)
+                await asyncio.sleep(5)
             except Exception as e:
                 print(f"❌ Update error: {e}")
                 await asyncio.sleep(30)
