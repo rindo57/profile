@@ -53,7 +53,7 @@ class ProfileUpdater:
             
             # Determine new status
             new_status = user.status
-            new_name = "Ken 🟢" if new_status == UserStatus.ONLINE else "Ken 🔴"
+            new_name = "Ken 🟢" if new_status == UserStatus.ONLINE else "Ken 🟡"
             
             # Only update if status changed
             if new_status != self.last_status:
