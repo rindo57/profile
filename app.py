@@ -2,11 +2,11 @@ import requests
 import time
 import os
 import asyncio
-from pyrogram import Client
+from pyrogram import Client, idle
 from PIL import Image, ImageOps
 from pyrogram.errors import FloodWait
 
-# Replace with your Telegram API credentials
+# Telegram API credentials
 API_ID = 10247139
 API_HASH = "96b46175824223a33737657ab943fd6a"
 
@@ -78,7 +78,10 @@ async def update_profile_pic():
     else:
         print("❌ Failed to update profile picture.")
 
-async def main_loop():
+async def main():
+    await app.start()
+    print(f"✅ Logged in as {(await app.get_me()).first_name}")
+    
     # Initial updates
     await update_name()
     await update_profile_pic()
@@ -98,11 +101,17 @@ async def main_loop():
             print(f"❌ Main loop error: {e}")
             await asyncio.sleep(30)  # Wait before retrying
 
-@app.on_message()
-async def handle_messages(client, message):
-    # This keeps the connection alive
-    pass
+    await idle()
+    await app.stop()
 
-# Start the client
-print("Starting the bot...")
-app.run(main_loop())
+if __name__ == "__main__":
+    try:
+        asyncio.run(main())
+    except KeyboardInterrupt:
+        print("\n👋 Stopping the bot...")
+    except Exception as e:
+        print(f"❌ Unexpected error: {e}")
+    finally:
+        if app.is_connected:
+            app.stop()
+        print("✅ Bot stopped successfully")
