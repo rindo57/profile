@@ -4,6 +4,7 @@ import time
 from pyrogram import Client
 from PIL import Image, ImageOps
 from pyrogram.errors import FloodWait
+from pyrogram.enums import UserStatus
 
 # Telegram API credentials
 API_ID = 10247139
@@ -17,6 +18,7 @@ class ProfileUpdater:
         self.app = Client("auto_profile_pic_session", api_id=API_ID, api_hash=API_HASH)
         self.running = True
         self.last_pic_update = 0
+        self.last_status = None
 
     def get_png_image_url(self):
         try:
@@ -48,11 +50,17 @@ class ProfileUpdater:
         try:
             me = await self.app.get_me()
             user = await self.app.get_users(me.id)
-            new_name = "Ken 🟢" if user.status == "online" else "Ken 🔴"
             
-            if me.first_name != new_name:
+            # Determine new status
+            new_status = user.status
+            new_name = "Ken 🟢" if new_status == UserStatus.ONLINE else "Ken 🔴"
+            
+            # Only update if status changed
+            if new_status != self.last_status:
                 await self.app.update_profile(first_name=new_name)
-                print(f"✅ Name updated to: {new_name}")
+                print(f"✅ Name updated to: {new_name} (Status: {new_status})")
+                self.last_status = new_status
+                
         except FloodWait as e:
             print(f"⚠️ Flood wait: {e.x} seconds")
             await asyncio.sleep(e.x)
@@ -79,7 +87,7 @@ class ProfileUpdater:
     async def run_updates(self):
         while self.running:
             try:
-                # Update name every 10 seconds
+                # Update name based on status
                 await self.update_name()
                 
                 # Update profile pic every 15 minutes (900 seconds)
@@ -93,7 +101,12 @@ class ProfileUpdater:
 
     async def run(self):
         await self.app.start()
-        print(f"✅ Logged in as {(await self.app.get_me()).first_name}")
+        me = await self.app.get_me()
+        print(f"✅ Logged in as {me.first_name}")
+        
+        # Initialize status tracking
+        user = await self.app.get_users(me.id)
+        self.last_status = user.status
         
         try:
             # Initial profile pic update
