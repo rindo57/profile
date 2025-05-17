@@ -96,4 +96,8 @@ with app:
     # Start profile picture updating thread
     pp_thread = Thread(target=update_profile_picture)
     pp_thread.daemon = True
-    pp_thread.star
+    pp_thread.start()
+    
+    # Keep the main thread alive
+    while True:
+        time.sleep(1)
